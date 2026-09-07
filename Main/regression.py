@@ -70,6 +70,37 @@ X_new = np.concatenate((np.ones((len(x_axis), 1)), x_axis),axis=1)
 Y_pred = X_new@B
 
 plt.plot(x_axis, Y_pred)
+
+#4 MQO Polinomial
+
+plt.figure(3)
+plt.scatter(data[:, 0], data[:, 1])
+plt.xlabel("Ano")
+plt.ylabel("PIB")
+
+x_normalized = (x - x.mean()) / x.std()
+X = np.concatenate((np.ones((len(x_normalized), 1)), x_normalized), axis=1)
+p = 6
+
+for i, n in enumerate(range(2, p+1)):
+    X = np.concatenate((X, x_normalized**n), axis=1)
+
+I = np.eye(X.shape[1])
+I[0,0] = 0
+lamb = 100
+B = np.linalg.pinv((X.T@X) + (lamb*I))@X.T@y
+
+x_axis = np.linspace(data[0,0], data[-1,0], 100)
+x_axis = x_axis.reshape(len(x_axis), 1)
+x_axis_normalized = (x_axis - x.mean()) / x.std()
+X_new = np.concatenate((np.ones((len(x_axis_normalized), 1)), x_axis_normalized),axis=1)
+
+for i, n in enumerate(range(2, p+1)):
+    X_new = np.concatenate((X_new, x_axis_normalized**n), axis=1)
+
+Y_pred = X_new@B
+
+plt.plot(x_axis, Y_pred)
 plt.show()
 
 print()
