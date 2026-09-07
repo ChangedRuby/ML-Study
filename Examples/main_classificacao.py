@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.loadtxt("EMG.csv",delimiter=' ')
+data = np.loadtxt("../Datasets/EMG.csv",delimiter=' ')
 classes = np.unique(data[:,-1])
 classes = [1,2,3, 4,5]
 nomes = [
