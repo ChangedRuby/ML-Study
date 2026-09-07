@@ -211,13 +211,147 @@ for q in range(start_q, end_q - 1, -1):
 
     final_R_squared.append(np.mean(tested_R_squared))
 
+print("4.1 Estrategia de poda com média do R2")
 # print(f"R_squared para cada p: {final_R_squared}")
 for i, r in enumerate(final_R_squared):
-    print(f"para o p = {start_q - i}: R_squared = {r}")
+    print(f"para o q = {start_q - i}: R_squared = {r}")
 
 ####### CRIA O HIST COM O R_squared DE CADA p ########
 plt.bar(range(start_q, end_q - 1, -1), final_R_squared)
 ###################
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!5 MQO Regularizado Normalizado com diferentes lambdas
+
+plt.figure(6)
+plt.xlabel("λ")
+plt.ylabel("R²")
+
+final_R_squared_mean = []
+final_R_squared_std = []
+final_R_squared_max = []
+final_R_squared_min = []
+final_MSE_mean = []
+final_MSE_std = []
+final_MSE_max = []
+final_MSE_min = []
+lambdas = [0, 0.25, 0.5, 0.75, 1]
+for i, lamb in enumerate(lambdas):
+    tested_R_squared = []
+    tested_MSE = []
+    testing_amount = 500
+    for _ in range(testing_amount):
+        indicies = np.random.permutation(len(x))
+        x_shuffled = x[indicies]
+        y_shuffled = y[indicies]
+        x_training = x_shuffled[:int(.8*len(x_shuffled))]
+        x_testing = x_shuffled[int(.8*len(x_shuffled)):]
+        x_training_normalized = (x_training - x_training.mean()) / x_training.std()
+        x_testing_normalized = (x_testing - x_training.mean()) / x_training.std()
+        y_training = y_shuffled[:int(.8*len(y_shuffled))]
+        y_testing = y_shuffled[int(.8*len(y_shuffled)):]
+
+        X = np.concatenate((np.ones((len(x_training_normalized), 1)), x_training_normalized), axis=1)
+
+        I = np.eye(X.shape[1])
+        I[0,0] = 0
+        B = np.linalg.pinv((X.T@X) + (lamb*I))@X.T@y_training
+
+        ####### TESTA COM OS DADOS DE TESTE ########
+        X_testing = np.concatenate((np.ones((len(x_testing_normalized), 1)), x_testing_normalized), axis=1)
+        Y_pred = X_testing@B
+
+        R_squared = 1 - (np.sum((y_testing - Y_pred)**2) / np.sum((y_testing - np.mean(y_testing))**2))
+        MSE = np.sum((y_testing - Y_pred) ** 2) / len(y_testing)
+        tested_R_squared.append(R_squared)
+        tested_MSE.append(MSE)
+        ###################
+
+    final_R_squared_mean.append(np.mean(tested_R_squared))
+    final_R_squared_std.append(np.std(tested_R_squared))
+    final_R_squared_max.append(np.max(tested_R_squared))
+    final_R_squared_min.append(np.min(tested_R_squared))
+    final_MSE_mean.append(np.mean(tested_MSE))
+    final_MSE_std.append(np.std(tested_MSE))
+    final_MSE_max.append(np.max(tested_MSE))
+    final_MSE_min.append(np.min(tested_MSE))
+
+print("5 MQO Regularizado Normalizado com diferentes lambdas")
+for i, r in enumerate(final_R_squared_mean):
+    print(f"para o lamb = {lambdas[i]}: R_squared = {r}; R_squared_std = {final_R_squared_std[i]}; R_squared_max = {final_R_squared_max[i]}; R_squared_min = {final_R_squared_min[i]}; \n                  MSE = {final_MSE_mean[i]}; MSE_std = {final_MSE_std[i]}; MSE_max = {final_MSE_max[i]}; MSE_min = {final_MSE_min[i]}")
+
+####### CRIA O HIST COM O R_squared DE CADA lamb ########
+plt.grid(True)
+plt.bar(lambdas, final_R_squared_mean, width=0.2)
+
+plt.figure(7)
+plt.xlabel("λ")
+plt.ylabel("MSE")
+plt.grid(True)
+plt.bar(lambdas, final_MSE_mean, width=0.2)
+###################
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!5.1 MQO Polinomial Regularizado Normalizado com diferentes lambdas e 'q' definido
+# Mesma coisa do anterior, mas para o polinomial
+# Não é utilizado no artigo
+
+final_R_squared_mean = []
+final_R_squared_std = []
+final_R_squared_max = []
+final_R_squared_min = []
+final_MSE_mean = []
+final_MSE_std = []
+final_MSE_max = []
+final_MSE_min = []
+lambdas = [0]
+q = 6
+for i, lamb in enumerate(lambdas):
+    tested_R_squared = []
+    tested_MSE = []
+    testing_amount = 500
+    for _ in range(testing_amount):
+        indicies = np.random.permutation(len(x))
+        x_shuffled = x[indicies]
+        y_shuffled = y[indicies]
+        x_training = x_shuffled[:int(.8 * len(x_shuffled))]
+        x_testing = x_shuffled[int(.8 * len(x_shuffled)):]
+        x_training_normalized = (x_training - x_training.mean()) / x_training.std()
+        x_testing_normalized = (x_testing - x_training.mean()) / x_training.std()
+        y_training = y_shuffled[:int(.8 * len(y_shuffled))]
+        y_testing = y_shuffled[int(.8 * len(y_shuffled)):]
+
+        X = np.concatenate((np.ones((len(x_training_normalized), 1)), x_training_normalized), axis=1)
+        for i, n in enumerate(range(2, q + 1)):
+            X = np.concatenate((X, x_training_normalized ** n), axis=1)
+
+        I = np.eye(X.shape[1])
+        I[0, 0] = 0
+        B = np.linalg.pinv((X.T @ X) + (lamb * I)) @ X.T @ y_training
+
+        ####### TESTA COM OS DADOS DE TESTE ########
+        X_testing = np.concatenate((np.ones((len(x_testing_normalized), 1)), x_testing_normalized), axis=1)
+        for i, n in enumerate(range(2, q + 1)):
+            X_testing = np.concatenate((X_testing, x_testing_normalized ** n), axis=1)
+
+        Y_pred = X_testing @ B
+
+        R_squared = 1 - (np.sum((y_testing - Y_pred) ** 2) / np.sum((y_testing - np.mean(y_testing)) ** 2))
+        MSE = np.sum((y_testing - Y_pred) ** 2) / len(y_testing)
+        tested_R_squared.append(R_squared)
+        tested_MSE.append(MSE)
+        ###################
+
+    final_R_squared_mean.append(np.mean(tested_R_squared))
+    final_R_squared_std.append(np.std(tested_R_squared))
+    final_R_squared_max.append(np.max(tested_R_squared))
+    final_R_squared_min.append(np.min(tested_R_squared))
+    final_MSE_mean.append(np.mean(tested_MSE))
+    final_MSE_std.append(np.std(tested_MSE))
+    final_MSE_max.append(np.max(tested_MSE))
+    final_MSE_min.append(np.min(tested_MSE))
+
+print("5.1 MQO Polinomial Regularizado Normalizado com diferentes lambdas e 'q' definido")
+for i, r in enumerate(final_R_squared_mean):
+    print(f"para o lamb = {lambdas[i]}: R_squared = {r}; R_squared_std = {final_R_squared_std[i]}; R_squared_max = {final_R_squared_max[i]}; R_squared_min = {final_R_squared_min[i]}; \n                  MSE = {final_MSE_mean[i]}; MSE_std = {final_MSE_std[i]}; MSE_max = {final_MSE_max[i]}; MSE_min = {final_MSE_min[i]}")
 
 plt.show()
 
