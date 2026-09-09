@@ -7,11 +7,8 @@ from pathlib import Path
 # Cada funcao recebe os dados de treino e teste e retorna as classes previstas
 from classificacao import (
     classificar_mqo,
-    classificar_gaussiano_tradicional,
-    classificar_gaussiano_cov_total,
-    classificar_gaussiano_cov_agregada,
-    classificar_bayes_ingenuo,
-    classificar_gaussiano_regularizado
+    classificar_mqo_regularizado,
+    classificar_mqo_polinomial
 )
 
 
@@ -20,6 +17,7 @@ lambdas = [0, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4,
            0.5, 0.6, 0.7, 0.8, 0.9, 1]
 k = 10
 R = 500
+q_polinomial = 5
 
 
 # Carrega os dados
@@ -57,7 +55,7 @@ for lamb in lambdas:
         X_validacao = X[indices_validacao]
         y_validacao = y[indices_validacao]
 
-        y_predito = classificar_gaussiano_regularizado(
+        y_predito = classificar_mqo_regularizado(
             X_treino,
             y_treino,
             X_validacao,
@@ -85,11 +83,8 @@ print(f"\nMelhor lambda: {lambda_ideal}")
 
 nomes_modelos = [
     "MQO tradicional",
-    "Gaussiano tradicional",
-    "Gaussiano cov. total",
-    "Gaussiano cov. agregada",
-    "Bayes ingenuo",
-    "Gaussiano regularizado"
+    "MQO regularizado",
+    f"MQO polinomial q={q_polinomial}"
 ]
 
 # Cada modelo tera uma lista com 500 acuracias
@@ -112,15 +107,17 @@ for rodada in range(R):
     # Cada funcao abaixo pertence a implementacao do item 3
     predicoes = [
         classificar_mqo(X_treino, y_treino, X_teste),
-        classificar_gaussiano_tradicional(X_treino, y_treino, X_teste),
-        classificar_gaussiano_cov_total(X_treino, y_treino, X_teste),
-        classificar_gaussiano_cov_agregada(X_treino, y_treino, X_teste),
-        classificar_bayes_ingenuo(X_treino, y_treino, X_teste),
-        classificar_gaussiano_regularizado(
+        classificar_mqo_regularizado(
             X_treino,
             y_treino,
             X_teste,
             lambda_ideal
+        ),
+        classificar_mqo_polinomial(
+            X_treino,
+            y_treino,
+            X_teste,
+            q_polinomial
         )
     ]
 
@@ -200,7 +197,7 @@ plt.close()
 # Boxplot das 500 acuracias de cada modelo
 plt.figure(figsize=(11, 6))
 plt.boxplot([resultados[nome] for nome in nomes_modelos])
-plt.xticks(range(1, 7), nomes_modelos, rotation=20, ha="right")
+plt.xticks(range(1, len(nomes_modelos) + 1), nomes_modelos)
 plt.ylabel("Acuracia")
 plt.title("Resultados das 500 rodadas de Monte Carlo")
 plt.grid(axis="y", alpha=0.3)
