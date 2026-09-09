@@ -69,3 +69,15 @@ plt.show()
 
 
 bp = 1
+
+
+def classificar_mqo():
+    return None
+
+
+def classificar_mqo_regularizado():
+    return None
+
+
+def classificar_mqo_polinomial():
+    return None
