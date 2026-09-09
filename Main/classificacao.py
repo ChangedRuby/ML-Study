@@ -69,3 +69,25 @@ plt.show()
 
 
 bp = 1
+
+
+def classificar_mqo():
+    return None
+
+def classificar_gaussiano_tradicional():
+    return None
+
+def classificar_gaussiano_cov_total():
+    return None
+
+
+def classificar_gaussiano_cov_agregada():
+    return None
+
+
+def classificar_bayes_ingenuo():
+    return None
+
+
+def classificar_gaussiano_regularizado():
+    return None

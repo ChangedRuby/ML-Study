@@ -3,8 +3,21 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 
 
+# Funcoes implementadas no item 3
+# Cada funcao recebe os dados de treino e teste e retorna as classes previstas
+from classificacao import (
+    classificar_mqo,
+    classificar_gaussiano_tradicional,
+    classificar_gaussiano_cov_total,
+    classificar_gaussiano_cov_agregada,
+    classificar_bayes_ingenuo,
+    classificar_gaussiano_regularizado
+)
+
+
 # Configuracoes do trabalho
-lambdas = [0, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+lambdas = [0, 0.001, 0.01, 0.1, 0.2, 0.3, 0.4,
+           0.5, 0.6, 0.7, 0.8, 0.9, 1]
 k = 10
 R = 500
 
@@ -15,103 +28,10 @@ dados = np.loadtxt(raiz / "Datasets" / "EMG.csv", delimiter=" ")
 
 X = dados[:, 0:2]
 y = dados[:, 2].astype(int)
-classes = np.unique(y)
 
 
 def acuracia(y_real, y_predito):
     return np.mean(y_real == y_predito)
-
-
-# MQO multiclasse
-def treinar_mqo(X_treino, y_treino):
-    X_com_1 = np.column_stack((np.ones(len(X_treino)), X_treino))
-
-    # A classe correta recebe 1 e as outras recebem -1
-    Y = -np.ones((len(y_treino), len(classes)))
-    for i, classe in enumerate(classes):
-        Y[y_treino == classe, i] = 1
-
-    W = np.linalg.pinv(X_com_1) @ Y
-    return W
-
-
-def predizer_mqo(X_teste, W):
-    X_com_1 = np.column_stack((np.ones(len(X_teste)), X_teste))
-    pontuacoes = X_com_1 @ W
-    return classes[np.argmax(pontuacoes, axis=1)]
-
-
-# Calcula os parametros usados pelos classificadores gaussianos
-def treinar_gaussiano(X_treino, y_treino):
-    medias = []
-    covariancias = []
-    probabilidades = []
-    quantidades = []
-
-    for classe in classes:
-        X_classe = X_treino[y_treino == classe]
-
-        medias.append(np.mean(X_classe, axis=0))
-        covariancias.append(np.cov(X_classe.T))
-        probabilidades.append(len(X_classe) / len(X_treino))
-        quantidades.append(len(X_classe))
-
-    medias = np.array(medias)
-    covariancias = np.array(covariancias)
-    probabilidades = np.array(probabilidades)
-    quantidades = np.array(quantidades)
-
-    # Covariancia calculada com todos os dados de treinamento
-    covariancia_total = np.cov(X_treino.T)
-
-    # Media ponderada das covariancias das classes
-    covariancia_agregada = np.zeros((2, 2))
-    for i in range(len(classes)):
-        covariancia_agregada += (quantidades[i] - 1) * covariancias[i]
-
-    covariancia_agregada /= len(X_treino) - len(classes)
-
-    return medias, covariancias, probabilidades, covariancia_total, covariancia_agregada
-
-
-def predizer_gaussiano(X_teste, parametros, tipo, lamb=0):
-    medias, covariancias, probabilidades, cov_total, cov_agregada = parametros
-    pontuacoes = np.zeros((len(X_teste), len(classes)))
-
-    for i in range(len(classes)):
-        if tipo == "tradicional":
-            cov = covariancias[i]
-
-        elif tipo == "total":
-            cov = cov_total
-
-        elif tipo == "agregada":
-            cov = cov_agregada
-
-        elif tipo == "naive":
-            # No Naive Bayes, as covariancias fora da diagonal viram zero
-            cov = np.diag(np.diag(covariancias[i]))
-
-        elif tipo == "regularizado":
-            cov = (1 - lamb) * covariancias[i] + lamb * cov_agregada
-
-        # Evita erro caso a matriz seja singular
-        cov = cov + 1e-6 * np.eye(2)
-
-        diferenca = X_teste - medias[i]
-        inversa = np.linalg.pinv(cov)
-
-        # Distancia de Mahalanobis de cada amostra ate a classe
-        distancia = np.sum((diferenca @ inversa) * diferenca, axis=1)
-
-        # Log da probabilidade gaussiana
-        pontuacoes[:, i] = (
-            -0.5 * np.log(np.linalg.det(cov))
-            -0.5 * distancia
-            + np.log(probabilidades[i])
-        )
-
-    return classes[np.argmax(pontuacoes, axis=1)]
 
 
 # ============================================================
@@ -137,9 +57,11 @@ for lamb in lambdas:
         X_validacao = X[indices_validacao]
         y_validacao = y[indices_validacao]
 
-        parametros = treinar_gaussiano(X_treino, y_treino)
-        y_predito = predizer_gaussiano(
-            X_validacao, parametros, "regularizado", lamb
+        y_predito = classificar_gaussiano_regularizado(
+            X_treino,
+            y_treino,
+            X_validacao,
+            lamb
         )
 
         acuracias_lambda.append(acuracia(y_validacao, y_predito))
@@ -187,19 +109,18 @@ for rodada in range(R):
     X_teste = X[indices_teste]
     y_teste = y[indices_teste]
 
-    # Treina os modelos
-    W = treinar_mqo(X_treino, y_treino)
-    parametros = treinar_gaussiano(X_treino, y_treino)
-
-    # Faz as predicoes
+    # Cada funcao abaixo pertence a implementacao do item 3
     predicoes = [
-        predizer_mqo(X_teste, W),
-        predizer_gaussiano(X_teste, parametros, "tradicional"),
-        predizer_gaussiano(X_teste, parametros, "total"),
-        predizer_gaussiano(X_teste, parametros, "agregada"),
-        predizer_gaussiano(X_teste, parametros, "naive"),
-        predizer_gaussiano(
-            X_teste, parametros, "regularizado", lambda_ideal
+        classificar_mqo(X_treino, y_treino, X_teste),
+        classificar_gaussiano_tradicional(X_treino, y_treino, X_teste),
+        classificar_gaussiano_cov_total(X_treino, y_treino, X_teste),
+        classificar_gaussiano_cov_agregada(X_treino, y_treino, X_teste),
+        classificar_bayes_ingenuo(X_treino, y_treino, X_teste),
+        classificar_gaussiano_regularizado(
+            X_treino,
+            y_treino,
+            X_teste,
+            lambda_ideal
         )
     ]
 
