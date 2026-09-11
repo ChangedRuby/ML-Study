@@ -92,7 +92,7 @@ plt.grid()
 
 # MQO Regularizado
 
-lambda_reg = 0.9 #mudar?
+lambda_reg = 0.9  #mudar?
 
 I = np.eye(X_mqo.shape[1])
 
@@ -218,13 +218,10 @@ for q in range(1, 6):
 
     # Mostrar polinomial!!!!!!!!!!!!!!!!!!!
 
-fig, axes = plt.subplots(2, 2, figsize=(16, 11))
-axes = axes.ravel()
 
-for indice, q in enumerate(range(2, 6)):
 
+for q in range(1, 6):
     X_poly = criar_polinomio(X_norm, q)
-
     W_poly = np.linalg.pinv(X_poly) @ Y
 
     Y_pred_poly = X_poly @ W_poly
@@ -241,33 +238,28 @@ for indice, q in enumerate(range(2, 6)):
     )
 
     X_grade = np.column_stack((xx1.ravel(), xx2.ravel()))
-    
     X_grade_poly = criar_polinomio(X_grade, q)
 
     Y_grade = X_grade_poly @ W_poly
     classes_grade = np.argmax(Y_grade, axis=1) + 1
     classes_grade = classes_grade.reshape(xx1.shape)
 
-    
     xx1_original = xx1 * 4095
     xx2_original = xx2 * 4095
 
-    
-    ax = axes[indice]
+ 
+    plt.figure(figsize=(8, 6))
 
-    
-    ax.contourf(
+    plt.contourf(
         xx1_original,
         xx2_original,
         classes_grade,
         alpha=0.25
     )
 
-   
     for classe in range(1, 6):
         indices = classes == classe
-
-        ax.scatter(
+        plt.scatter(
             sensor1[indices],
             sensor2[indices],
             label=f"Classe {classe}",
@@ -275,30 +267,12 @@ for indice, q in enumerate(range(2, 6)):
             s=8
         )
 
-    ax.set_xlabel("Sensor 1 - Corrugador")
-    ax.set_ylabel("Sensor 2 - Zigomático")
-    ax.set_title(
-        f"MQO Polinomial - q={q}\n"
-        f"Acurácia = {accuracy_poly:.4f}"
-    )
-    ax.grid()
+    plt.xlabel("Sensor 1 - Corrugador")
+    plt.ylabel("Sensor 2 - Zigomático")
+    plt.title(f"MQO Polinomial - q={q}\nAcurácia = {accuracy_poly:.4f}")
+    plt.legend()
+    plt.grid()
 
-# Espaçamento entre os gráficos
-plt.subplots_adjust(
-    wspace=0.25,
-    hspace=0.35,
-    bottom=0.12
-)
-
-
-handles, labels = axes[0].get_legend_handles_labels()
-
-fig.legend(
-    handles,
-    labels,
-    loc="lower center",
-    ncol=5
-)
 
 plt.show()
 

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-data = np.loadtxt("../Datasets/china_gdp.csv", delimiter=',', skiprows=1)
+data = np.loadtxt("Datasets/china_gdp.csv", delimiter=',', skiprows=1)
 
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 
