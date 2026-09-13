@@ -26,6 +26,8 @@ x_axis = x_axis.reshape(len(x_axis), 1)
 X_testing = np.concatenate((np.ones((len(x_axis), 1)), x_axis), axis=1)
 Y_pred = X_testing @ B
 
+print(B)
+
 plt.plot(x_axis, Y_pred)
 # plt.show()
 
@@ -128,7 +130,7 @@ for i, n in enumerate(range(2, q + 1)):
 
 I = np.eye(X.shape[1])
 I[0,0] = 0
-lamb = 1
+lamb = 0.75
 B = np.linalg.pinv((X.T@X) + (lamb*I))@X.T@y_training
 
 ####### TESTA COM OS DADOS DE TESTE ########
@@ -302,7 +304,7 @@ final_MSE_mean = []
 final_MSE_std = []
 final_MSE_max = []
 final_MSE_min = []
-lambdas = [0]
+lambdas = [0.75]
 q = 6
 for i, lamb in enumerate(lambdas):
     tested_R_squared = []
